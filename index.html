@@ -190,8 +190,8 @@ h2{font-size:20px;font-weight:800;margin-bottom:14px;}
 <body>
 
 <header class="hdr">
-  <div class="hdr-left">
-    <span style="font-size:22px;cursor:default;" onclick="resetTap()">🌱</span>
+  <div class="hdr-left" id="hdr-left" onclick="resetTap()" style="cursor:default;user-select:none;-webkit-user-select:none;">
+    <span style="font-size:22px;">🌱</span>
     <span class="hdr-title">The Three Healthies</span>
   </div>
   <div class="hdr-right">
@@ -777,8 +777,11 @@ function renderBadges(){
 let _rtaps=0,_rtimer;
 function resetTap(){
   _rtaps++; clearTimeout(_rtimer);
-  _rtimer=setTimeout(()=>_rtaps=0,1200);
-  if(_rtaps>=5){
+  _rtimer=setTimeout(()=>_rtaps=0,2500);
+  // flash header briefly so user knows the tap registered
+  const el=document.getElementById('hdr-left');
+  el.style.opacity='.5'; setTimeout(()=>el.style.opacity='',150);
+  if(_rtaps>=3){
     _rtaps=0;
     const pw=prompt('🔐 Enter password to reset all data:');
     if(pw==='dontdelete'){
