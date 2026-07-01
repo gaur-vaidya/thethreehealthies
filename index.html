@@ -235,7 +235,7 @@ h2{font-size:20px;font-weight:800;margin-bottom:14px;}
     <div class="fs-search">
       <input type="text" id="fs-inp" placeholder="Search foods…" oninput="filterFoods(this.value)" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" onclick="this.removeAttribute('readonly')">
     </div>
-    <div class="fs-skip" onclick="logCatDone()">✓ Just mark this category as done</div>
+    <div id="fs-skip" class="fs-skip" onclick="logCatDone()">✓ Just mark this category as done</div>
     <div class="food-list" id="food-list"></div>
   </div>
 </div>
@@ -504,6 +504,17 @@ function filterFoods(q){
   } else {
     chips.className=''; chips.innerHTML='';
   }
+  // Toggle mark-done vs unlog button
+  const skipBtn=document.getElementById('fs-skip');
+  if(alreadyCat){
+    skipBtn.textContent='↩ Unlog this category';
+    skipBtn.onclick=()=>unlogCat(activeCat);
+    skipBtn.style.color='#dc2626'; skipBtn.style.borderColor='#fca5a5'; skipBtn.style.background='#fff5f5';
+  } else {
+    skipBtn.textContent='✓ Just mark this category as done';
+    skipBtn.onclick=logCatDone;
+    skipBtn.style.color=''; skipBtn.style.borderColor=''; skipBtn.style.background='';
+  }
   const list=FOODS[activeCat]||[];
   const filtered=q.trim()?list.filter(f=>f.toLowerCase().includes(q.toLowerCase())):list;
   const isFirst=!alreadyCat;
@@ -576,6 +587,26 @@ function unlogFood(catId, foodName){
   filterFoods(document.getElementById('fs-inp').value);
   renderAll();
   toast(`Removed ${foodName}`);
+}
+
+function unlogCat(catId){
+  const dateStr=today();
+  const log=mkLog(dateStr,who);
+  const cat=log.cats[catId];
+  if(!cat.logged) return;
+  const diff=cat.xp;
+  cat.logged=false; cat.foods=[]; cat.xp=0;
+  log.totalXP=Math.max(0,log.totalXP-diff);
+  const s=getSt(who);
+  s.totalXP=Math.max(0,s.totalXP-diff);
+  s.weeklyXP=Math.max(0,s.weeklyXP-diff);
+  s.monthlyXP=Math.max(0,s.monthlyXP-diff);
+  s.level=getLevel(s.totalXP).l;
+  updateStreak(who,dateStr,streakContrib(log));
+  writeCache();
+  filterFoods(document.getElementById('fs-inp').value);
+  renderAll();
+  toast(`${CAT[catId].label} unlogged`);
 }
 
 // ── Mission toggle ────────────────────────────────────────────────────────────
