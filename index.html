@@ -227,11 +227,11 @@ h2{font-size:20px;font-weight:800;margin-bottom:14px;}
 
 <!-- Food overlay -->
 <div id="food-ov" onclick="if(event.target===this)closeFoodOv()">
-  <div class="food-sheet" style="position:relative;" onclick="event.stopPropagation()">
-    <button onclick="closeFoodOv()" style="position:absolute;top:10px;right:12px;z-index:10;background:#e2e8f0;border:none;border-radius:50%;width:34px;height:34px;font-size:20px;line-height:34px;text-align:center;cursor:pointer;color:#334155;">✕</button>
+  <div class="food-sheet" onclick="event.stopPropagation()">
     <div class="fs-handle"></div>
-    <div style="padding:12px 52px 12px 16px;border-bottom:1px solid var(--border);">
-      <span id="fs-title" style="font-size:17px;font-weight:800;">Log Food</span>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);">
+      <span id="fs-title" style="font-size:17px;font-weight:800;flex:1;">Log Food</span>
+      <button onclick="closeFoodOv()" style="margin-left:12px;background:#e2e8f0;border:none;border-radius:50%;min-width:34px;height:34px;font-size:20px;cursor:pointer;color:#334155;">✕</button>
     </div>
     <div id="logged-chips"></div>
     <div class="fs-search">
