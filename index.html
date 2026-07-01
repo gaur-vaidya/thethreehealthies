@@ -769,8 +769,31 @@ function renderBadges(){
       </div>
     </div>`;
   });
-  h+='</div>';
+  h+='</div><div style="text-align:center;margin-top:40px;"><span id="reset-dot" onclick="resetTap()" style="color:#f0fdf4;font-size:9px;user-select:none;cursor:default;">·</span></div>';
   document.getElementById('pg-badges').innerHTML=h;
+}
+
+// ── Hidden reset ──────────────────────────────────────────────────────────────
+let _rtaps=0,_rtimer;
+function resetTap(){
+  _rtaps++; clearTimeout(_rtimer);
+  _rtimer=setTimeout(()=>_rtaps=0,1200);
+  if(_rtaps>=5){
+    _rtaps=0;
+    const pw=prompt('🔐 Enter password to reset all data:');
+    if(pw==='dontdelete'){
+      if(confirm('⚠️ This will permanently delete ALL health data for everyone. Are you sure?')){
+        cache={logs:{},stats:{}};
+        lsSet('cache',cache);
+        DOC.set({data:cache}).then(()=>{
+          toast('✓ Database reset complete');
+          renderAll();
+        }).catch(()=>toast('Reset failed — check connection'));
+      }
+    } else if(pw!==null){
+      toast('Wrong password');
+    }
+  }
 }
 
 // ── Navigation ────────────────────────────────────────────────────────────────
