@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="3 Healthies">
+<meta name="theme-color" content="#16a34a">
+<title>🌱 The Three Healthies</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+:root {
+  --green:#16a34a; --green-l:#dcfce7; --green-d:#14532d;
+  --orange:#ea580c; --bg:#f0fdf4; --card:#ffffff;
+  --border:#e2e8f0; --text:#1e293b; --muted:#64748b;
+  --dad:#3b82f6; --mom:#ec4899; --son:#8b5cf6;
+  --r:14px; --shadow:0 2px 8px rgba(0,0,0,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);max-width:480px;margin:0 auto;min-height:100vh;padding-bottom:72px;}
+
+/* HEADER */
+.hdr{background:var(--green);color:#fff;padding:11px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.hdr-left{display:flex;align-items:center;gap:8px;}
+.hdr-title{font-size:17px;font-weight:800;}
+.hdr-right{display:flex;align-items:center;gap:8px;}
+.live-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);transition:all .3s;}
+.live-dot.on{background:#4ade80;box-shadow:0 0 6px #4ade80;}
+.hdr-date{font-size:12px;opacity:.85;}
+
+/* BOTTOM NAV */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:1px solid var(--border);display:flex;z-index:100;box-shadow:0 -2px 12px rgba(0,0,0,.06);}
+.nav-btn{flex:1;border:none;background:none;padding:7px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted);cursor:pointer;}
+.nav-btn .nb-icon{font-size:22px;line-height:1;}
+.nav-btn.on{color:var(--green);font-weight:700;}
+
+/* PAGES */
+.page{display:none;padding:16px;}
+.page.on{display:block;}
+h2{font-size:20px;font-weight:800;margin-bottom:14px;}
+
+/* CARDS */
+.card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow);padding:14px;margin-bottom:12px;}
+.card-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px;}
+
+/* WHO SELECTOR */
+.who-bar{display:flex;gap:8px;margin-bottom:14px;}
+.who-btn{flex:1;border:2px solid var(--border);background:#fff;border-radius:10px;padding:9px 6px;font-size:13px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:all .18s;}
+.who-btn .wi{font-size:26px;line-height:1;}
+.who-btn.on{border-color:var(--green);background:var(--green-l);color:var(--green-d);}
+
+/* CATEGORY GRID */
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.cat-card{border-radius:12px;padding:10px 6px 8px;text-align:center;cursor:pointer;border:2px solid transparent;transition:all .18s;position:relative;user-select:none;}
+.cat-card:active{transform:scale(.96);}
+.cat-card .ce{font-size:26px;display:block;margin-bottom:3px;}
+.cat-card .cn{font-size:10px;font-weight:700;line-height:1.2;}
+.cat-card .cx{font-size:10px;margin-top:3px;opacity:.7;}
+.cat-card .cf{font-size:9px;margin-top:2px;opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.chk{position:absolute;top:3px;right:3px;background:var(--green);color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;display:flex;align-items:center;justify-content:center;}
+
+/* Category colours */
+.c-fr{background:#fff1f2;border-color:#fecdd3;color:#9f1239;}
+.c-gv{background:#f0fdf4;border-color:#bbf7d0;color:#14532d;}
+.c-ov{background:#fff7ed;border-color:#fed7aa;color:#9a3412;}
+.c-pr{background:#faf5ff;border-color:#e9d5ff;color:#581c87;}
+.c-da{background:#eff6ff;border-color:#bfdbfe;color:#1e3a8a;}
+.c-ns{background:#fffbeb;border-color:#fde68a;color:#78350f;}
+.c-wg{background:#f7fee7;border-color:#d9f99d;color:#365314;}
+.c-wa{background:#ecfeff;border-color:#a5f3fc;color:#164e63;}
+
+/* MISSIONS */
+.mission{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);margin-bottom:6px;cursor:pointer;background:#fff;transition:all .18s;}
+.mission.on{background:var(--green-l);border-color:var(--green);}
+.mission:active{transform:scale(.99);}
+.me{font-size:20px;}
+.mi{flex:1;}
+.mn{font-size:13px;font-weight:600;}
+.mx{font-size:11px;color:var(--muted);}
+.mc{font-size:18px;}
+
+/* STAT ROW */
+.stat-row{display:flex;gap:8px;margin-bottom:12px;}
+.stat{flex:1;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center;}
+.sv{font-size:20px;font-weight:800;color:var(--green);}
+.sl{font-size:10px;color:var(--muted);margin-top:2px;}
+
+/* TODAY - MEMBER CARDS */
+.m-today{background:#fff;border-radius:var(--r);border:2px solid var(--border);padding:13px;margin-bottom:12px;}
+.mt-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;}
+.mt-name{font-size:17px;font-weight:800;}
+.mt-tags{display:flex;gap:5px;align-items:center;margin-top:4px;flex-wrap:wrap;}
+.lv-pill{display:inline-flex;align-items:center;background:linear-gradient(135deg,var(--green),#15803d);color:#fff;border-radius:20px;padding:2px 8px;font-size:11px;font-weight:700;}
+.sk-pill{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;border-radius:20px;padding:2px 8px;font-size:11px;font-weight:600;}
+.mt-xp{text-align:right;}
+.mt-xpval{font-size:22px;font-weight:800;color:var(--green);}
+.mt-xplbl{font-size:10px;color:var(--muted);}
+.vbadge{background:linear-gradient(135deg,#ea580c,#dc2626);color:#fff;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;display:inline-block;margin-top:4px;}
+.cat-dots{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;}
+.cd{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;opacity:.2;transition:opacity .3s;}
+.cd.on{opacity:1;}
+.mt-prog{margin-top:6px;font-size:12px;color:var(--muted);}
+
+/* LEADERBOARD */
+.lb-tabs{display:flex;gap:6px;margin-bottom:14px;}
+.lb-tab{flex:1;padding:7px;border-radius:8px;border:1px solid var(--border);background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .18s;}
+.lb-tab.on{background:var(--green);color:#fff;border-color:var(--green);}
+.lb-row{display:flex;align-items:center;gap:10px;padding:13px;background:#fff;border-radius:12px;border:2px solid var(--border);margin-bottom:8px;transition:all .18s;}
+.lb-rank{font-size:24px;font-weight:900;width:38px;text-align:center;}
+.lb-icon{font-size:30px;}
+.lb-info{flex:1;}
+.lb-name{font-size:15px;font-weight:800;}
+.lb-detail{font-size:11px;color:var(--muted);margin-top:3px;}
+.lb-xp{text-align:right;}
+.lb-xpv{font-size:24px;font-weight:800;color:var(--green);}
+.lb-xpl{font-size:10px;color:var(--muted);}
+.lb-row.gold{border-color:#fbbf24;background:#fffbeb;}
+.lb-row.silver{border-color:#94a3b8;background:#f8fafc;}
+.lb-row.bronze{border-color:#d97706;background:#fef3c7;}
+
+/* BADGES */
+.badge-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.badge-card{background:#fff;border-radius:12px;border:2px solid var(--border);padding:14px;text-align:center;}
+.badge-icon{font-size:38px;margin-bottom:5px;}
+.badge-name{font-size:13px;font-weight:800;margin-bottom:3px;}
+.badge-desc{font-size:11px;color:var(--muted);line-height:1.4;margin-bottom:8px;}
+.badge-owners{display:flex;justify-content:center;gap:5px;flex-wrap:wrap;}
+.boc{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+.boc.yes{background:var(--green-l);color:var(--green-d);}
+.boc.no{background:#f1f5f9;color:var(--muted);}
+.badge-card.full{border-color:var(--green);background:#f0fdf4;}
+
+/* FOOD OVERLAY */
+#food-ov{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.5);align-items:flex-end;}
+#food-ov.on{display:flex;}
+.food-sheet{background:#fff;border-radius:20px 20px 0 0;width:100%;max-height:82vh;display:flex;flex-direction:column;}
+.fs-handle{width:40px;height:4px;background:#e2e8f0;border-radius:2px;margin:12px auto 0;}
+.fs-title{padding:12px 16px;font-size:17px;font-weight:800;border-bottom:1px solid var(--border);}
+.fs-search{padding:10px 16px;border-bottom:1px solid var(--border);}
+.fs-search input{width:100%;padding:9px 14px;border-radius:10px;border:1.5px solid var(--border);font-size:15px;outline:none;background:#f8fafc;}
+.fs-search input:focus{border-color:var(--green);}
+.fs-skip{margin:10px 16px 2px;padding:11px;background:#f8fafc;border:1.5px dashed var(--border);border-radius:10px;text-align:center;cursor:pointer;font-size:13px;color:var(--muted);font-weight:600;}
+.fs-skip:hover{background:var(--green-l);border-color:var(--green);color:var(--green-d);}
+.food-list{overflow-y:auto;flex:1;padding:6px 16px 16px;}
+.fi{padding:11px 10px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:background .15s;}
+.fi:hover,.fi:active{background:var(--green-l);}
+.fi-name{font-size:14px;font-weight:500;}
+.fi-right{display:flex;align-items:center;gap:6px;}
+.sf-badge{background:#fef3c7;color:#b45309;border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700;}
+.fi-xp{font-size:12px;font-weight:700;color:var(--green);}
+.fi.logged-food .fi-name{color:var(--muted);text-decoration:line-through;}
+
+/* Logged category card state */
+.cat-card.c-logged{opacity:.72;filter:saturate(.7);}
+.cat-card.c-logged .chk{display:flex;}
+
+/* VIRAT OVERLAY */
+#virat-ov{display:none;position:fixed;inset:0;z-index:300;background:linear-gradient(135deg,#ea580c,#dc2626,#7f1d1d);align-items:center;justify-content:center;text-align:center;color:#fff;padding:24px;}
+#virat-ov.on{display:flex;}
+.vc{max-width:320px;width:100%;}
+.vflame{font-size:80px;display:block;margin-bottom:12px;animation:flamepulse 1s ease-in-out infinite;}
+@keyframes flamepulse{0%,100%{transform:scale(1) rotate(-2deg);}50%{transform:scale(1.12) rotate(2deg);}}
+.vt{font-size:34px;font-weight:900;letter-spacing:-.02em;line-height:1.1;text-shadow:0 2px 12px rgba(0,0,0,.3);}
+.vwho{font-size:22px;font-weight:700;margin:10px 0 6px;opacity:.95;}
+.vsub{font-size:14px;opacity:.85;margin-bottom:20px;line-height:1.5;}
+.vxp{font-size:26px;font-weight:800;background:rgba(255,255,255,.2);border-radius:12px;padding:10px 20px;margin-bottom:22px;display:block;}
+.vbtn{background:#fff;color:#ea580c;border:none;border-radius:14px;padding:14px 28px;font-size:18px;font-weight:800;cursor:pointer;width:100%;}
+
+/* TOAST */
+#toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(8px);background:#1e293b;color:#fff;padding:9px 18px;border-radius:24px;font-size:13px;font-weight:600;opacity:0;transition:all .25s;z-index:400;white-space:nowrap;max-width:90vw;text-align:center;}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* XP POP */
+.xp-pop{position:fixed;font-size:22px;font-weight:900;color:var(--green);pointer-events:none;z-index:500;text-shadow:0 2px 6px rgba(0,0,0,.15);animation:xpfloat 1.2s ease-out forwards;}
+@keyframes xpfloat{0%{opacity:1;transform:translateY(0) scale(1);}60%{opacity:1;transform:translateY(-40px) scale(1.1);}100%{opacity:0;transform:translateY(-70px) scale(.9);}}
+
+/* CONFETTI */
+.conf{position:fixed;z-index:299;pointer-events:none;border-radius:3px;animation:conffall linear forwards;}
+@keyframes conffall{to{transform:translateY(110vh) rotate(720deg);opacity:0;}}
+
+/* EMPTY */
+.empty{text-align:center;padding:32px 16px;color:var(--muted);}
+.empty .ei{font-size:48px;margin-bottom:8px;}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-left">
+    <span style="font-size:22px">🌱</span>
+    <span class="hdr-title">The Three Healthies</span>
+  </div>
+  <div class="hdr-right">
+    <span id="liveDot" class="live-dot" title="Firestore sync"></span>
+    <span id="hdrDate" class="hdr-date"></span>
+  </div>
+</header>
+
+<nav class="nav">
+  <button class="nav-btn on" id="nav-today" onclick="go('today')">
+    <span class="nb-icon">🏠</span><span>Today</span>
+  </button>
+  <button class="nav-btn" id="nav-log" onclick="go('log')">
+    <span class="nb-icon">🍽️</span><span>Log</span>
+  </button>
+  <button class="nav-btn" id="nav-board" onclick="go('board')">
+    <span class="nb-icon">🏆</span><span>Board</span>
+  </button>
+  <button class="nav-btn" id="nav-badges" onclick="go('badges')">
+    <span class="nb-icon">🎖️</span><span>Badges</span>
+  </button>
+</nav>
+
+<div id="pg-today" class="page on"></div>
+<div id="pg-log"   class="page"></div>
+<div id="pg-board" class="page"></div>
+<div id="pg-badges" class="page"></div>
+
+<!-- Food overlay -->
+<div id="food-ov" onclick="if(event.target===this)closeFoodOv()">
+  <div class="food-sheet" onclick="event.stopPropagation()">
+    <div class="fs-handle"></div>
+    <div class="fs-title" id="fs-title">Log Food</div>
+    <div class="fs-search">
+      <input type="text" id="fs-inp" placeholder="Search foods…" oninput="filterFoods(this.value)" autocomplete="off">
+    </div>
+    <div class="fs-skip" onclick="logCatDone()">✓ Just mark this category as done</div>
+    <div class="food-list" id="food-list"></div>
+  </div>
+</div>
+
+<!-- Virat Mode overlay -->
+<div id="virat-ov">
+  <div class="vc">
+    <span class="vflame">🔥</span>
+    <div class="vt">VIRAT MODE</div>
+    <div class="vt">ACTIVATED!</div>
+    <div class="vwho" id="v-who"></div>
+    <div class="vsub">You crushed it today!<br>Consistency is everything. Keep the fire burning! 💪</div>
+    <span class="vxp">+50 XP Bonus! ⭐</span>
+    <button class="vbtn" onclick="closeVirat()">Let's Go! 🚀</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+// ── Firebase ──────────────────────────────────────────────────────────────────
+firebase.initializeApp({
+  apiKey:"AIzaSyBRle2vM8ymIT8lPXZ3-ppMEbaULvNGqD4",
+  authDomain:"the-three-healthies.firebaseapp.com",
+  projectId:"the-three-healthies",
+  storageBucket:"the-three-healthies.firebasestorage.app",
+  messagingSenderId:"627126324242",
+  appId:"1:627126324242:web:57b9745e556f8bf68f1ccb"
+});
+const db = firebase.firestore();
+const DOC = db.collection('t3h').doc('gaurvaidya_fam_2026');
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+const MEMBERS = ['Dad','Mom','Son'];
+const ICONS   = {Dad:'👨',Mom:'👩',Son:'👦'};
+const COLORS  = {Dad:'#3b82f6',Mom:'#ec4899',Son:'#8b5cf6'};
+
+const CATS = [
+  {id:'fruits',         emoji:'🍎',label:'Fruits',       cls:'c-fr',baseXP:15},
+  {id:'greenVeg',       emoji:'🥬',label:'Green Veg',    cls:'c-gv',baseXP:20},
+  {id:'otherVeg',       emoji:'🌈',label:'Other Veg',    cls:'c-ov',baseXP:15},
+  {id:'protein',        emoji:'💪',label:'Protein',      cls:'c-pr',baseXP:20},
+  {id:'dairy',          emoji:'🥛',label:'Dairy',        cls:'c-da',baseXP:15},
+  {id:'nutsSeeds',      emoji:'🥜',label:'Nuts & Seeds', cls:'c-ns',baseXP:15},
+  {id:'wholeGrains',    emoji:'🌾',label:'Whole Grains', cls:'c-wg',baseXP:15},
+  {id:'water',          emoji:'💧',label:'Water',        cls:'c-wa',baseXP:10},
+];
+const CAT = Object.fromEntries(CATS.map(c=>[c.id,c]));
+
+const MISSIONS = [
+  {id:'healthyBreakfast',emoji:'🌅',name:'Healthy Breakfast',xp:20},
+  {id:'homemadeMeal',    emoji:'🍳',name:'Homemade Meal',    xp:15},
+  {id:'healthySnack',    emoji:'🥜',name:'Healthy Snack',    xp:10},
+  {id:'salad',           emoji:'🥗',name:'Salad',            xp:15},
+  {id:'rainbowPlate',    emoji:'🌈',name:'Rainbow Plate',    xp:25},
+  {id:'noJunkFood',      emoji:'🚫',name:'No Junk Food',     xp:20},
+  {id:'noSugaryDrinks',  emoji:'💧',name:'No Sugary Drinks', xp:15},
+];
+
+const ND = new Set(['Spinach (Palak)','Broccoli','Sprouts','Blueberries','Walnuts',
+  'Chia Seeds','Flax Seeds (Alsi)','Amla','Drumstick (Moringa)','Methi (Fenugreek)',
+  'Pomegranate','Salmon','Tuna','Kiwi','Almonds']);
+
+const FOODS = {
+  fruits:      ['Apple','Banana','Orange','Mango','Papaya','Watermelon','Grapes','Guava','Pomegranate','Pineapple','Strawberry','Blueberries','Kiwi','Pear','Plum','Litchi','Chikoo','Jamun','Amla','Dates','Avocado','Lemon'],
+  greenVeg:    ['Spinach (Palak)','Broccoli','Peas','French Beans','Bottle Gourd (Lauki)','Ridge Gourd (Turai)','Cucumber','Zucchini','Methi (Fenugreek)','Coriander','Mint','Drumstick (Moringa)','Green Capsicum','Spring Onion','Celery','Bitter Gourd (Karela)','Amaranth (Chaulai)','Cluster Beans (Gavar)','Sprouts'],
+  otherVeg:    ['Carrot','Tomato','Onion','Sweet Potato','Pumpkin','Beetroot','Radish (Mooli)','Cauliflower','Cabbage','Brinjal (Baingan)','Red/Yellow Capsicum','Corn','Raw Banana','Arbi (Colocasia)','Yam (Suran)','Mushroom','Purple Cabbage','Lotus Root'],
+  protein:     ['Egg','Dal (Lentils)','Rajma (Kidney Beans)','Chole (Chickpeas)','Moong Dal','Chicken','Fish','Paneer','Tofu','Sprouts','Soya Chunks','Peanuts','Edamame','Mutton','Prawn','Tuna','Salmon','Greek Yogurt'],
+  dairy:       ['Milk','Curd (Dahi)','Paneer','Cheese','Buttermilk (Chaas)','Lassi','Yogurt','Khoa','Ghee (small)','Butter (small)','Cottage Cheese'],
+  nutsSeeds:   ['Almonds','Walnuts','Cashews','Pistachios','Peanuts','Chia Seeds','Flax Seeds (Alsi)','Sunflower Seeds','Pumpkin Seeds','Sesame Seeds (Til)','Watermelon Seeds','Hemp Seeds','Raisins','Figs (Anjeer)','Apricots'],
+  wholeGrains: ['Oats','Brown Rice','Whole Wheat Roti','Multigrain Bread','Quinoa','Jowar (Sorghum)','Bajra (Pearl Millet)','Ragi (Finger Millet)','Barley (Jau)','Buckwheat (Kuttu)','Amaranth (Rajgira)','Red Rice'],
+  water:       ['Water (8+ glasses)','Coconut Water','Lemon Water','Herbal Tea','Green Tea','Infused Water'],
+};
+
+const BADGES = [
+  {id:'fruit-hero',   icon:'🍎',name:'Fruit Hero',       desc:'Log fruits 7 days in a row',      type:'catStreak',catId:'fruits',         need:7},
+  {id:'green-hero',   icon:'🥬',name:'Green Hero',       desc:'Log green veg 7 days in a row',   type:'catStreak',catId:'greenVeg',        need:7},
+  {id:'water-warrior',icon:'💧',name:'Water Warrior',    desc:'Log water 14 days in a row',      type:'catStreak',catId:'water',           need:14},
+  {id:'brain-boost',  icon:'🧠',name:'Brain Boost',      desc:'Log nuts & seeds 5 times',        type:'catTotal', catId:'nutsSeeds',       need:5},
+  {id:'strong-bones', icon:'🦴',name:'Strong Bones',     desc:'Log dairy 10 times',              type:'catTotal', catId:'dairy',           need:10},
+  {id:'protein-king', icon:'💪',name:'Protein King',     desc:'Log protein 10 times',            type:'catTotal', catId:'protein',         need:10},
+  {id:'rainbow-champ',icon:'🌈',name:'Rainbow Champion', desc:'Complete Rainbow Plate 3 times',  type:'msnTotal', msnId:'rainbowPlate',    need:3},
+  {id:'virat-legend', icon:'🔥',name:'Virat Legend',     desc:'Activate Virat Mode 5 times',     type:'viratTotal',                        need:5},
+];
+
+const LEVELS = [
+  {l:1,name:'Seedling',xp:0},{l:2,name:'Sprout',xp:100},{l:3,name:'Sapling',xp:250},
+  {l:4,name:'Leaf',xp:500},{l:5,name:'Branch',xp:850},{l:6,name:'Tree',xp:1300},
+  {l:7,name:'Orchard',xp:1900},{l:8,name:'Champion',xp:2700},{l:9,name:'Virat',xp:3700},{l:10,name:'Legend',xp:5000},
+];
+
+const VIRAT_XP = 50;
+const ND_BONUS = 5;
+
+// ── State ─────────────────────────────────────────────────────────────────────
+const SK = 't3h_v1';
+let cache = {logs:{},stats:{}};
+let who = 'Dad';
+let activeCat = null;
+let lbPeriod = 'weekly';
+let _wt = null;
+
+// ── LocalStorage ──────────────────────────────────────────────────────────────
+function lsLoad(){ try{return JSON.parse(localStorage.getItem(SK)||'{}')}catch{return{}} }
+function lsSave(d){ try{localStorage.setItem(SK,JSON.stringify(d))}catch{} }
+function lsGet(k,def){ const s=lsLoad(); return k in s?s[k]:def; }
+function lsSet(k,v){ const s=lsLoad(); s[k]=v; lsSave(s); }
+
+// ── Date helpers ──────────────────────────────────────────────────────────────
+function today(){ return new Date().toISOString().split('T')[0]; }
+function yday(){  const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; }
+function wkStart(){
+  const d=new Date(); const dy=d.getDay();
+  d.setDate(d.getDate()-dy+(dy===0?-6:1));
+  return d.toISOString().split('T')[0];
+}
+function moStart(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`;
+}
+
+// ── Cache helpers ─────────────────────────────────────────────────────────────
+function getLog(date,m){ return cache.logs?.[date]?.[m]??null; }
+
+function mkLog(date,m){
+  if(!cache.logs)cache.logs={};
+  if(!cache.logs[date])cache.logs[date]={};
+  if(!cache.logs[date][m]){
+    cache.logs[date][m]={
+      cats:Object.fromEntries(CATS.map(c=>[c.id,{logged:false,foods:[],xp:0}])),
+      msns:Object.fromEntries(MISSIONS.map(ms=>[ms.id,false])),
+      totalXP:0, virat:false, viratAwarded:false,
+    };
+  }
+  return cache.logs[date][m];
+}
+
+function getSt(m){
+  if(!cache.stats)cache.stats={};
+  if(!cache.stats[m]) cache.stats[m]={
+    totalXP:0,weeklyXP:0,monthlyXP:0,streak:0,longestStreak:0,
+    lastStreakDate:null,earnedBadges:[],viratCount:0,level:1,
+    wkStart:wkStart(),moStart:moStart(),
+  };
+  return cache.stats[m];
+}
+
+// ── Game logic ─────────────────────────────────────────────────────────────────
+function getLevel(xp){
+  for(let i=LEVELS.length-1;i>=0;i--) if(xp>=LEVELS[i].xp) return LEVELS[i];
+  return LEVELS[0];
+}
+
+function resetPeriods(m){
+  const s=getSt(m);
+  if(s.wkStart!==wkStart()){s.weeklyXP=0;s.wkStart=wkStart();}
+  if(s.moStart!==moStart()){s.monthlyXP=0;s.moStart=moStart();}
+}
+
+function addXP(m,xp){
+  const s=getSt(m);
+  resetPeriods(m);
+  s.totalXP+=xp; s.weeklyXP+=xp; s.monthlyXP+=xp;
+  s.level=getLevel(s.totalXP).l;
+}
+
+function streakContrib(log){
+  return log.cats.fruits.logged &&
+         log.cats.protein.logged &&
+         (log.cats.greenVeg.logged||log.cats.otherVeg.logged) &&
+         log.cats.water.logged;
+}
+
+function updateStreak(m,dateStr,counts){
+  const s=getSt(m);
+  if(!counts) return;
+  if(s.lastStreakDate===dateStr) return;
+  const prevYday = s.lastStreakDate===yday();
+  s.streak = prevYday ? s.streak+1 : 1;
+  s.longestStreak=Math.max(s.longestStreak,s.streak);
+  s.lastStreakDate=dateStr;
+}
+
+function checkStreakBreak(m){
+  const s=getSt(m);
+  if(s.lastStreakDate && s.lastStreakDate<yday()) s.streak=0;
+}
+
+function viratMode(log){
+  return log.cats.fruits.logged && log.cats.greenVeg.logged &&
+         log.cats.protein.logged && log.cats.water.logged &&
+         log.msns.noJunkFood && log.msns.noSugaryDrinks;
+}
+
+function checkBadges(m){
+  const s=getSt(m); const logs=cache.logs||{}; const newB=[];
+  const dates=Object.keys(logs).sort().reverse();
+  for(const b of BADGES){
+    if(s.earnedBadges.includes(b.id)) continue;
+    let ok=false;
+    if(b.type==='catStreak'){
+      let streak=0;
+      for(const d of dates){
+        if(logs[d][m]?.cats[b.catId]?.logged){streak++; if(streak>=b.need){ok=true;break;}}
+        else break;
+      }
+    } else if(b.type==='catTotal'){
+      ok=dates.filter(d=>logs[d][m]?.cats[b.catId]?.logged).length>=b.need;
+    } else if(b.type==='msnTotal'){
+      ok=dates.filter(d=>logs[d][m]?.msns[b.msnId]).length>=b.need;
+    } else if(b.type==='viratTotal'){
+      ok=s.viratCount>=b.need;
+    }
+    if(ok){s.earnedBadges.push(b.id);newB.push(b);}
+  }
+  return newB;
+}
+
+// ── Core log action (shared by logFood + logCatDone) ─────────────────────────
+function applyLog(catId,foodName,xp){
+  const dateStr=today(); const log=mkLog(dateStr,who); const cat=log.cats[catId];
+  if(foodName) cat.foods.push(foodName);
+  cat.logged=true; cat.xp+=xp; log.totalXP+=xp;
+  addXP(who,xp);
+  updateStreak(who,dateStr,streakContrib(log));
+  if(!log.viratAwarded&&viratMode(log)){
+    log.virat=true; log.viratAwarded=true;
+    log.totalXP+=VIRAT_XP; const s=getSt(who);
+    s.totalXP+=VIRAT_XP; s.weeklyXP+=VIRAT_XP; s.monthlyXP+=VIRAT_XP;
+    s.viratCount++; s.level=getLevel(s.totalXP).l;
+    setTimeout(()=>showVirat(who),500);
+  }
+  const nb=checkBadges(who);
+  if(nb.length) setTimeout(()=>nb.forEach(b=>toast(`🎖️ Badge Unlocked: ${b.name}!`)),900);
+  writeCache();
+}
+
+// ── Food overlay ──────────────────────────────────────────────────────────────
+function openFoodOv(catId){
+  const cat=CAT[catId]; activeCat=catId;
+  document.getElementById('fs-title').textContent=`${cat.emoji} ${cat.label}  •  ${ICONS[who]} ${who}`;
+  document.getElementById('fs-inp').value='';
+  filterFoods('');
+  document.getElementById('food-ov').classList.add('on');
+  setTimeout(()=>document.getElementById('fs-inp').focus(),200);
+}
+function closeFoodOv(){
+  document.getElementById('food-ov').classList.remove('on');
+  activeCat=null;
+}
+function filterFoods(q){
+  if(!activeCat) return;
+  const log=getLog(today(),who);
+  const logged=new Set(log?.cats[activeCat]?.foods||[]);
+  const alreadyCat=log?.cats[activeCat]?.logged||false;
+  const list=FOODS[activeCat]||[];
+  const filtered=q.trim()?list.filter(f=>f.toLowerCase().includes(q.toLowerCase())):list;
+  const isFirst=!alreadyCat;
+  document.getElementById('food-list').innerHTML=filtered.map(f=>{
+    const isND=ND.has(f); const isLg=logged.has(f);
+    const xp=isLg?0:(isFirst?CAT[activeCat].baseXP:0)+(isND?ND_BONUS:0);
+    return `<div class="fi${isLg?' logged-food':''}" onclick="logFood('${f.replace(/'/g,"\\'")}')">
+      <span class="fi-name">${isLg?'✓ ':''}${f}</span>
+      <span class="fi-right">
+        ${isND?'<span class="sf-badge">⭐ Superfood</span>':''}
+        <span class="fi-xp">${xp>0?'+'+xp+' XP':isLg?'✓':''}</span>
+      </span>
+    </div>`;
+  }).join('');
+}
+
+function logFood(foodName){
+  if(!activeCat) return;
+  const log=getLog(today(),who);
+  if(log?.cats[activeCat]?.foods?.includes(foodName)){toast(`${foodName} already logged!`);return;}
+  const isFirst=!log?.cats[activeCat]?.logged;
+  const xp=(isFirst?CAT[activeCat].baseXP:0)+(ND.has(foodName)?ND_BONUS:0);
+  applyLog(activeCat,foodName,xp);
+  showXPPop(xp);
+  toast(`✓ ${foodName} logged! +${xp} XP`);
+  closeFoodOv();
+  renderAll();
+}
+
+function logCatDone(){
+  if(!activeCat) return;
+  const log=getLog(today(),who);
+  if(log?.cats[activeCat]?.logged){toast('Already logged!');closeFoodOv();return;}
+  const xp=CAT[activeCat].baseXP;
+  applyLog(activeCat,null,xp);
+  showXPPop(xp);
+  toast(`✓ ${CAT[activeCat].label} done! +${xp} XP`);
+  closeFoodOv();
+  renderAll();
+}
+
+// ── Mission toggle ────────────────────────────────────────────────────────────
+function toggleMsn(msnId){
+  const dateStr=today(); const log=mkLog(dateStr,who);
+  const m=MISSIONS.find(x=>x.id===msnId);
+  if(log.msns[msnId]){
+    log.msns[msnId]=false; log.totalXP=Math.max(0,log.totalXP-m.xp);
+    const s=getSt(who);
+    s.totalXP=Math.max(0,s.totalXP-m.xp);
+    s.weeklyXP=Math.max(0,s.weeklyXP-m.xp);
+    s.monthlyXP=Math.max(0,s.monthlyXP-m.xp);
+    toast(`${m.name} unchecked`);
+  } else {
+    log.msns[msnId]=true; log.totalXP+=m.xp;
+    addXP(who,m.xp);
+    showXPPop(m.xp); toast(`✓ ${m.name}! +${m.xp} XP`);
+    if(!log.viratAwarded&&viratMode(log)){
+      log.virat=true; log.viratAwarded=true;
+      log.totalXP+=VIRAT_XP; const s=getSt(who);
+      s.totalXP+=VIRAT_XP; s.weeklyXP+=VIRAT_XP; s.monthlyXP+=VIRAT_XP;
+      s.viratCount++; s.level=getLevel(s.totalXP).l;
+      setTimeout(()=>showVirat(who),500);
+    }
+    const nb=checkBadges(who); if(nb.length) setTimeout(()=>nb.forEach(b=>toast(`🎖️ ${b.name} badge unlocked!`)),900);
+  }
+  writeCache(); renderAll();
+}
+
+// ── Virat Mode ────────────────────────────────────────────────────────────────
+function showVirat(m){
+  document.getElementById('v-who').textContent=`${ICONS[m]} ${m}`;
+  document.getElementById('virat-ov').classList.add('on');
+  spawnConfetti();
+}
+function closeVirat(){ document.getElementById('virat-ov').classList.remove('on'); }
+function spawnConfetti(){
+  const cols=['#16a34a','#ea580c','#fbbf24','#3b82f6','#ec4899','#8b5cf6'];
+  for(let i=0;i<70;i++){
+    const el=document.createElement('div');
+    el.className='conf';
+    const size=6+Math.random()*6;
+    el.style.cssText=`width:${size}px;height:${size}px;background:${cols[i%cols.length]};`+
+      `left:${Math.random()*100}vw;top:-12px;`+
+      `animation-duration:${1.2+Math.random()*1.8}s;animation-delay:${Math.random()*0.6}s;`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),3500);
+  }
+}
+
+// ── XP pop + Toast ────────────────────────────────────────────────────────────
+function showXPPop(xp){
+  const el=document.createElement('div');
+  el.className='xp-pop'; el.textContent='+'+xp+' XP';
+  el.style.left=(window.innerWidth/2-35)+'px';
+  el.style.top=(window.innerHeight/2)+'px';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1300);
+}
+let _tt;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('on');
+  clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('on'),2800);
+}
+
+// ── Firestore ─────────────────────────────────────────────────────────────────
+function writeCache(){
+  lsSet('cache',cache);
+  clearTimeout(_wt);
+  _wt=setTimeout(()=>DOC.set({data:cache}).catch(e=>console.error('Write failed:',e)),600);
+}
+
+function listenFS(){
+  DOC.onSnapshot(snap=>{
+    document.getElementById('liveDot').classList.add('on');
+    if(snap.metadata.hasPendingWrites||!snap.exists) return;
+    const remote=snap.data()?.data;
+    if(!remote) return;
+    cache=remote; lsSet('cache',cache);
+    renderAll();
+  },()=>document.getElementById('liveDot').classList.remove('on'));
+}
+
+// ── Render helpers ────────────────────────────────────────────────────────────
+function renderAll(){
+  const pg=document.querySelector('.page.on')?.id?.replace('pg-','');
+  if(pg==='today') renderToday();
+  if(pg==='log') renderLog();
+  if(pg==='board') renderBoard();
+  if(pg==='badges') renderBadges();
+}
+
+// ── Render: Today ─────────────────────────────────────────────────────────────
+function renderToday(){
+  const d=today();
+  const dStr=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  let h=`<h2>Today's Quest 🌱</h2>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">${dStr}</p>`;
+
+  MEMBERS.forEach(m=>{
+    checkStreakBreak(m);
+    const log=getLog(d,m); const s=getSt(m);
+    const xp=log?.totalXP||0; const virat=log?.virat||false;
+    const streak=s.streak||0; const lv=getLevel(s.totalXP);
+    const catDots=CATS.map(c=>`<span class="cd${log?.cats[c.id]?.logged?' on':''}" title="${c.label}">${c.emoji}</span>`).join('');
+    const loggedN=CATS.filter(c=>log?.cats[c.id]?.logged).length;
+    h+=`<div class="m-today" style="border-color:${COLORS[m]}30">
+      <div class="mt-head">
+        <div>
+          <div class="mt-name">${ICONS[m]} ${m}</div>
+          <div class="mt-tags">
+            <span class="lv-pill">Lv${lv.l} ${lv.name}</span>
+            ${streak>0?`<span class="sk-pill">🔥 ${streak}d streak</span>`:''}
+          </div>
+        </div>
+        <div class="mt-xp">
+          <div class="mt-xpval">${xp}</div>
+          <div class="mt-xplbl">XP today</div>
+          ${virat?'<span class="vbadge">🔥 VIRAT MODE</span>':''}
+        </div>
+      </div>
+      <div class="cat-dots">${catDots}</div>
+      <div class="mt-prog">${loggedN}/8 categories logged</div>
+    </div>`;
+  });
+  document.getElementById('pg-today').innerHTML=h;
+}
+
+// ── Render: Log ───────────────────────────────────────────────────────────────
+function renderLog(){
+  const d=today(); const log=getLog(d,who); const s=getSt(who);
+  const lv=getLevel(s.totalXP);
+  let h=`<h2>Log Food 🍽️</h2>
+  <div class="who-bar">
+    ${MEMBERS.map(m=>`<button class="who-btn${m===who?' on':''}" onclick="setWho('${m}')">
+      <span class="wi">${ICONS[m]}</span><span>${m}</span></button>`).join('')}
+  </div>
+  <div class="stat-row">
+    <div class="stat"><div class="sv">${log?.totalXP||0}</div><div class="sl">XP Today</div></div>
+    <div class="stat"><div class="sv">${s.streak||0}</div><div class="sl">🔥 Streak</div></div>
+    <div class="stat"><div class="sv">${s.totalXP||0}</div><div class="sl">Total XP</div></div>
+  </div>
+  <div class="card" style="padding:12px">
+    <div class="card-lbl">Food Categories</div>
+    <div class="cat-grid">`;
+
+  CATS.forEach(c=>{
+    const cl=log?.cats[c.id]; const isOn=cl?.logged||false; const xpE=cl?.xp||0;
+    const foods=cl?.foods||[];
+    h+=`<div class="cat-card ${c.cls}${isOn?' '+'c-logged':''}" onclick="openFoodOv('${c.id}')">
+      ${isOn?'<span class="chk">✓</span>':''}
+      <span class="ce">${c.emoji}</span>
+      <div class="cn">${c.label}</div>
+      <div class="cx">${isOn?'+'+xpE+' XP':'+'+c.baseXP+' XP'}</div>
+      ${foods.length?`<div class="cf">${foods[0]}${foods.length>1?' +'+( foods.length-1):''}</div>`:''}
+    </div>`;
+  });
+
+  h+=`</div></div>
+  <div class="card" style="padding:12px">
+    <div class="card-lbl">Bonus Missions ⭐</div>`;
+
+  MISSIONS.forEach(m=>{
+    const done=log?.msns[m.id]||false;
+    h+=`<div class="mission${done?' on':''}" onclick="toggleMsn('${m.id}')">
+      <span class="me">${m.emoji}</span>
+      <div class="mi"><div class="mn">${m.name}</div><div class="mx">+${m.xp} XP</div></div>
+      <span class="mc">${done?'✅':'⬜'}</span>
+    </div>`;
+  });
+
+  const vm=log?.virat;
+  h+=`</div>
+  <div class="card" style="background:${vm?'linear-gradient(135deg,#fff7ed,#fef3c7)':'#f8fafc'};border-color:${vm?'#fdba74':'var(--border)'}">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:32px">🔥</span>
+      <div>
+        <div style="font-weight:800;font-size:15px;color:${vm?'#ea580c':'var(--muted)'}">
+          ${vm?'VIRAT MODE ACTIVATED!':'Virat Mode'}
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">
+          ${vm?`${ICONS[who]} ${who} crushed it today! +50 XP earned`:'Fruit + Green Veg + Protein + Water + No Junk + No Sugary Drinks'}
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('pg-log').innerHTML=h;
+}
+
+// ── Render: Leaderboard ───────────────────────────────────────────────────────
+function renderBoard(){
+  const ranked=[...MEMBERS].map(m=>{
+    const s=getSt(m);
+    const xp=lbPeriod==='weekly'?s.weeklyXP:lbPeriod==='monthly'?s.monthlyXP:s.totalXP;
+    return {m,s,xp};
+  }).sort((a,b)=>b.xp-a.xp);
+
+  const medals=['🥇','🥈','🥉'];
+  const cls=['gold','silver','bronze'];
+  const plbl={weekly:'This Week',monthly:'This Month',allTime:'All Time'};
+
+  let h=`<h2>Leaderboard 🏆</h2>
+  <div class="lb-tabs">
+    ${[['weekly','This Week'],['monthly','This Month'],['allTime','All Time']].map(([p,l])=>
+      `<button class="lb-tab${lbPeriod===p?' on':''}" onclick="setLbPer('${p}')">${l}</button>`
+    ).join('')}
+  </div>
+  <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">${plbl[lbPeriod]} XP Rankings</p>`;
+
+  ranked.forEach(({m,s,xp},i)=>{
+    const lv=getLevel(s.totalXP);
+    h+=`<div class="lb-row ${cls[i]||''}">
+      <div class="lb-rank">${medals[i]||i+1}</div>
+      <div class="lb-icon">${ICONS[m]}</div>
+      <div class="lb-info">
+        <div class="lb-name">${m}</div>
+        <div class="lb-detail">Lv${lv.l} ${lv.name} · 🔥 ${s.streak||0}d · 🔥 ${s.viratCount||0} Virat</div>
+      </div>
+      <div class="lb-xp">
+        <div class="lb-xpv">${xp||0}</div>
+        <div class="lb-xpl">XP</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('pg-board').innerHTML=h;
+}
+
+// ── Render: Badges ────────────────────────────────────────────────────────────
+function renderBadges(){
+  let h='<h2>Badges 🎖️</h2><div class="badge-grid">';
+  BADGES.forEach(b=>{
+    const owners=MEMBERS.filter(m=>getSt(m).earnedBadges.includes(b.id));
+    const full=owners.length===MEMBERS.length;
+    h+=`<div class="badge-card${full?' full':''}">
+      <div class="badge-icon">${b.icon}</div>
+      <div class="badge-name">${b.name}</div>
+      <div class="badge-desc">${b.desc}</div>
+      <div class="badge-owners">
+        ${MEMBERS.map(m=>`<span class="boc ${owners.includes(m)?'yes':'no'}">${ICONS[m]} ${m}</span>`).join('')}
+      </div>
+    </div>`;
+  });
+  h+='</div>';
+  document.getElementById('pg-badges').innerHTML=h;
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function go(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('pg-'+page).classList.add('on');
+  document.getElementById('nav-'+page).classList.add('on');
+  renderAll();
+}
+function setWho(m){ who=m; lsSet('who',m); renderLog(); }
+function setLbPer(p){ lbPeriod=p; renderBoard(); }
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function init(){
+  who=lsGet('who','Dad');
+  cache=lsGet('cache',{logs:{},stats:{}});
+  MEMBERS.forEach(checkStreakBreak);
+  document.getElementById('hdrDate').textContent=
+    new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+  listenFS();
+  renderToday();
+}
+
+init();
+</script>
+</body>
+</html>

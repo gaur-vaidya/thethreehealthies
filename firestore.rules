@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // The Three Healthies — family-only single document, no auth
+    // The doc ID acts as a shared family namespace
+    match /t3h/{docId} {
+      allow read, write: if true;
+    }
+  }
+}

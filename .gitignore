@@ -1,0 +1,11 @@
+# Unused Next.js scaffold (app was rebuilt as plain HTML)
+three-healthies/
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# OS
+.DS_Store
+Thumbs.db
