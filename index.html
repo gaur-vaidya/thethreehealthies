@@ -226,7 +226,7 @@ h2{font-size:20px;font-weight:800;margin-bottom:14px;}
     <div class="fs-handle"></div>
     <div class="fs-title" id="fs-title">Log Food</div>
     <div class="fs-search">
-      <input type="text" id="fs-inp" placeholder="Search foods…" oninput="filterFoods(this.value)" autocomplete="off">
+      <input type="text" id="fs-inp" placeholder="Search foods…" oninput="filterFoods(this.value)" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" onclick="this.removeAttribute('readonly')">
     </div>
     <div class="fs-skip" onclick="logCatDone()">✓ Just mark this category as done</div>
     <div class="food-list" id="food-list"></div>
@@ -478,6 +478,7 @@ function openFoodOv(catId){
 }
 function closeFoodOv(){
   document.getElementById('food-ov').classList.remove('on');
+  document.getElementById('fs-inp').setAttribute('readonly','');
   activeCat=null;
 }
 function filterFoods(q){
