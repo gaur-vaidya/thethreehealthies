@@ -230,7 +230,7 @@ h2{font-size:20px;font-weight:800;margin-bottom:14px;}
 <div id="food-ov" onclick="if(event.target===this)closeFoodOv()">
   <div class="food-sheet" onclick="event.stopPropagation()">
     <div class="fs-handle"></div>
-    <div class="fs-title" id="fs-title">Log Food<button onclick="closeFoodOv()" style="float:right;background:none;border:none;font-size:22px;line-height:1;color:var(--muted);cursor:pointer;padding:0 2px;">×</button></div>
+    <div class="fs-title"><span id="fs-title">Log Food</span><button onclick="closeFoodOv()" style="float:right;background:none;border:none;font-size:22px;line-height:1;color:var(--muted);cursor:pointer;padding:0 2px;">×</button></div>
     <div id="logged-chips"></div>
     <div class="fs-search">
       <input type="text" id="fs-inp" placeholder="Search foods…" oninput="filterFoods(this.value)" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" onclick="this.removeAttribute('readonly')">
