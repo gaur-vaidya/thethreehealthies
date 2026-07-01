@@ -153,6 +153,12 @@ h2{font-size:20px;font-weight:800;margin-bottom:14px;}
 .sf-badge{background:#fef3c7;color:#b45309;border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700;}
 .fi-xp{font-size:12px;font-weight:700;color:var(--green);}
 .fi.logged-food .fi-name{color:var(--muted);text-decoration:line-through;}
+/* Logged food chips */
+#logged-chips{padding:8px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:6px;display:none;}
+#logged-chips.on{display:flex;}
+.lc{background:#dcfce7;color:#14532d;border-radius:20px;padding:5px 8px 5px 11px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;}
+.lc-x{background:none;border:none;color:#166534;font-size:16px;line-height:1;cursor:pointer;padding:0;opacity:.6;}
+.lc-x:hover,.lc-x:active{opacity:1;}
 
 /* Logged category card state */
 .cat-card.c-logged{opacity:.72;filter:saturate(.7);}
@@ -225,6 +231,7 @@ h2{font-size:20px;font-weight:800;margin-bottom:14px;}
   <div class="food-sheet" onclick="event.stopPropagation()">
     <div class="fs-handle"></div>
     <div class="fs-title" id="fs-title">Log Food</div>
+    <div id="logged-chips"></div>
     <div class="fs-search">
       <input type="text" id="fs-inp" placeholder="Search foods…" oninput="filterFoods(this.value)" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" onclick="this.removeAttribute('readonly')">
     </div>
@@ -484,8 +491,19 @@ function closeFoodOv(){
 function filterFoods(q){
   if(!activeCat) return;
   const log=getLog(today(),who);
-  const logged=new Set(log?.cats[activeCat]?.foods||[]);
+  const loggedFoods=log?.cats[activeCat]?.foods||[];
+  const logged=new Set(loggedFoods);
   const alreadyCat=log?.cats[activeCat]?.logged||false;
+  // Render logged food chips
+  const chips=document.getElementById('logged-chips');
+  if(loggedFoods.length){
+    chips.className='on';
+    chips.innerHTML=loggedFoods.map(f=>
+      `<span class="lc">${f}<button class="lc-x" onclick="unlogFood('${activeCat}','${f.replace(/'/g,"\\'")}')">×</button></span>`
+    ).join('');
+  } else {
+    chips.className=''; chips.innerHTML='';
+  }
   const list=FOODS[activeCat]||[];
   const filtered=q.trim()?list.filter(f=>f.toLowerCase().includes(q.toLowerCase())):list;
   const isFirst=!alreadyCat;
@@ -525,6 +543,39 @@ function logCatDone(){
   toast(`✓ ${CAT[activeCat].label} done! +${xp} XP`);
   closeFoodOv();
   renderAll();
+}
+
+function unlogFood(catId, foodName){
+  const dateStr=today();
+  const log=mkLog(dateStr,who);
+  const cat=log.cats[catId];
+  const idx=cat.foods.indexOf(foodName);
+  if(idx===-1) return;
+  const oldXP=cat.xp;
+  cat.foods.splice(idx,1);
+  // Recalc category XP from remaining foods
+  let newXP=0;
+  if(cat.foods.length>0){
+    newXP=CAT[catId].baseXP;
+    cat.foods.forEach(f=>{if(ND.has(f))newXP+=ND_BONUS;});
+    cat.logged=true;
+  } else {
+    cat.logged=false;
+  }
+  cat.xp=newXP;
+  const diff=oldXP-newXP;
+  log.totalXP=Math.max(0,log.totalXP-diff);
+  // Adjust stats XP
+  const s=getSt(who);
+  s.totalXP=Math.max(0,s.totalXP-diff);
+  s.weeklyXP=Math.max(0,s.weeklyXP-diff);
+  s.monthlyXP=Math.max(0,s.monthlyXP-diff);
+  s.level=getLevel(s.totalXP).l;
+  updateStreak(who,dateStr,streakContrib(log));
+  writeCache();
+  filterFoods(document.getElementById('fs-inp').value);
+  renderAll();
+  toast(`Removed ${foodName}`);
 }
 
 // ── Mission toggle ────────────────────────────────────────────────────────────
