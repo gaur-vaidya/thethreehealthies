@@ -191,7 +191,7 @@ h2{font-size:20px;font-weight:800;margin-bottom:14px;}
 
 <header class="hdr">
   <div class="hdr-left">
-    <span style="font-size:22px">🌱</span>
+    <span style="font-size:22px;cursor:default;" onclick="resetTap()">🌱</span>
     <span class="hdr-title">The Three Healthies</span>
   </div>
   <div class="hdr-right">
@@ -769,7 +769,7 @@ function renderBadges(){
       </div>
     </div>`;
   });
-  h+='</div><div style="text-align:center;margin-top:40px;"><span id="reset-dot" onclick="resetTap()" style="color:#f0fdf4;font-size:9px;user-select:none;cursor:default;">·</span></div>';
+  h+='</div>';
   document.getElementById('pg-badges').innerHTML=h;
 }
 
