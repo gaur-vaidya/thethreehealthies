@@ -1055,6 +1055,7 @@ function init(){
   who=lsGet('who','Dad');
   cache=lsGet('cache',{logs:{},stats:{}});
   MEMBERS.forEach(checkStreakBreak);
+  MEMBERS.forEach(m=>checkBadges(m)); // retroactively award any newly added badges
   document.getElementById('hdrDate').textContent=
     new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'});
   listenFS();
