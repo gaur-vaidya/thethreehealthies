@@ -134,9 +134,7 @@ h2{font-size:20px;font-weight:800;margin-bottom:14px;}
 .badge-name{font-size:12px;font-weight:800;margin-bottom:3px;}
 .badge-desc{font-size:10px;color:var(--muted);line-height:1.4;margin-bottom:7px;}
 .badge-owners{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;}
-.boc{padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;}
-.boc.yes{background:var(--green-l);color:var(--green-d);}
-.boc.no{background:#f1f5f9;color:var(--muted);}
+.boc{padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:var(--green-l);color:var(--green-d);}
 
 /* FOOD OVERLAY */
 #food-ov{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.5);align-items:flex-end;}
@@ -953,7 +951,7 @@ function renderBadges(){
         <div class="badge-name">${b.name}</div>
         <div class="badge-desc">${b.desc}</div>
         <div class="badge-owners">
-          ${MEMBERS.map(m=>`<span class="boc ${owners.includes(m)?'yes':'no'}">${ICONS[m]} ${m}</span>`).join('')}
+          ${owners.length?owners.map(m=>`<span class="boc yes">${ICONS[m]} ${m}</span>`).join(''):'<span style="font-size:10px;color:var(--muted);">Not yet earned</span>'}
         </div>
       </div>`;
     });
