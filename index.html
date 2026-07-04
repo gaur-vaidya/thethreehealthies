@@ -781,6 +781,10 @@ function listenFS(){
     const remote=snap.data()?.data;
     if(!remote) return;
     cache=remote; lsSet('cache',cache);
+    // Award any badges earned from historical data (handles newly added badges)
+    let anyNew=false;
+    MEMBERS.forEach(m=>{const nb=checkBadges(m);if(nb.length)anyNew=true;});
+    if(anyNew) writeCache();
     renderAll();
   },()=>document.getElementById('liveDot').classList.remove('on'));
 }
@@ -1055,7 +1059,6 @@ function init(){
   who=lsGet('who','Dad');
   cache=lsGet('cache',{logs:{},stats:{}});
   MEMBERS.forEach(checkStreakBreak);
-  MEMBERS.forEach(m=>checkBadges(m)); // retroactively award any newly added badges
   document.getElementById('hdrDate').textContent=
     new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'});
   listenFS();
