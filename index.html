@@ -164,6 +164,26 @@ h2{font-size:20px;font-weight:800;margin-bottom:14px;}
 .cat-card.c-logged{opacity:.72;filter:saturate(.7);}
 .cat-card.c-logged .chk{display:flex;}
 
+/* CALENDAR */
+.cal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.cal-nav-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:18px;cursor:pointer;color:var(--text);}
+.cal-nav-btn:disabled{opacity:.3;cursor:default;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-dow{text-align:center;font-size:10px;font-weight:700;color:var(--muted);padding:4px 0;}
+.cal-day{border-radius:7px;padding:4px 2px;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1px;background:#f1f5f9;}
+.cal-day.empty{background:transparent;}
+.cal-day.future{background:#f8fafc;opacity:.35;}
+.cal-day .cd-num{font-size:11px;font-weight:600;color:var(--muted);}
+.cal-day .cd-xp{font-size:10px;font-weight:800;color:var(--green);}
+.cal-day .cd-fire{font-size:10px;line-height:1;}
+.cal-day.xp1{background:#dcfce7;}
+.cal-day.xp2{background:#86efac;}
+.cal-day.xp3{background:#4ade80;}
+.cal-day.xp4{background:#16a34a;}
+.cal-day.xp4 .cd-num{color:rgba(255,255,255,.8);}
+.cal-day.xp4 .cd-xp{color:#fff;}
+.cal-day.today-cell{outline:2px solid var(--green);outline-offset:-2px;}
+
 /* VIRAT OVERLAY */
 #virat-ov{display:none;position:fixed;inset:0;z-index:300;background:linear-gradient(135deg,#ea580c,#dc2626,#7f1d1d);align-items:center;justify-content:center;text-align:center;color:#fff;padding:24px;}
 #virat-ov.on{display:flex;}
@@ -219,12 +239,16 @@ h2{font-size:20px;font-weight:800;margin-bottom:14px;}
   <button class="nav-btn" id="nav-badges" onclick="go('badges')">
     <span class="nb-icon">🎖️</span><span>Badges</span>
   </button>
+  <button class="nav-btn" id="nav-cal" onclick="go('cal')">
+    <span class="nb-icon">📅</span><span>Cal</span>
+  </button>
 </nav>
 
 <div id="pg-today" class="page on"></div>
 <div id="pg-log"   class="page"></div>
 <div id="pg-board" class="page"></div>
 <div id="pg-badges" class="page"></div>
+<div id="pg-cal" class="page"></div>
 
 <!-- Food overlay -->
 <div id="food-ov" onclick="if(event.target===this)closeFoodOv()">
@@ -339,6 +363,8 @@ let who = 'Dad';
 let activeCat = null;
 let lbPeriod = 'weekly';
 let _wt = null;
+let histY = new Date().getFullYear();
+let histM = new Date().getMonth();
 
 // ── LocalStorage ──────────────────────────────────────────────────────────────
 function lsLoad(){ try{return JSON.parse(localStorage.getItem(SK)||'{}')}catch{return{}} }
@@ -698,6 +724,7 @@ function renderAll(){
   if(pg==='log') renderLog();
   if(pg==='board') renderBoard();
   if(pg==='badges') renderBadges();
+  if(pg==='cal') renderHist();
 }
 
 // ── Render: Today ─────────────────────────────────────────────────────────────
@@ -881,6 +908,57 @@ function resetTap(){
   }
 }
 
+// ── Render: Calendar ──────────────────────────────────────────────────────────
+function renderHist(){
+  const todayStr=today();
+  const nowY=new Date().getFullYear(), nowM=new Date().getMonth();
+  const firstDow=new Date(histY,histM,1).getDay();
+  const daysInMonth=new Date(histY,histM+1,0).getDate();
+  const monthLabel=new Date(histY,histM,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+  const atCurrent=histY===nowY&&histM===nowM;
+
+  const whoBar=MEMBERS.map(m=>
+    `<button class="who-btn${who===m?' on':''}" onclick="setWho('${m}')"
+      style="${who===m?'border-color:'+COLORS[m]+';color:'+COLORS[m]:''}">
+      ${ICONS[m]} ${m}</button>`).join('');
+
+  let h=`<h2>History 📅</h2>
+  <div class="who-bar" style="margin-bottom:14px;">${whoBar}</div>
+  <div class="cal-hdr">
+    <button class="cal-nav-btn" onclick="calPrev()">‹</button>
+    <strong>${monthLabel}</strong>
+    <button class="cal-nav-btn" onclick="calNext()" ${atCurrent?'disabled':''}>›</button>
+  </div>
+  <div class="cal-grid">`;
+
+  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>h+=`<div class="cal-dow">${d}</div>`);
+  for(let i=0;i<firstDow;i++) h+=`<div class="cal-day empty"></div>`;
+
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${histY}-${String(histM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isFuture=ds>todayStr;
+    const isToday=ds===todayStr;
+    const xp=cache.logs?.[ds]?.[who]?.totalXP||0;
+    const virat=cache.logs?.[ds]?.[who]?.virat||false;
+    let cls=isFuture?'future':xp>=131?'xp4':xp>=81?'xp3':xp>=41?'xp2':xp>0?'xp1':'';
+    if(isToday) cls+=' today-cell';
+    h+=`<div class="cal-day ${cls}">
+      <span class="cd-num">${d}</span>
+      ${xp>0?`<span class="cd-xp">${xp}</span>`:''}
+      ${virat?`<span class="cd-fire">🔥</span>`:''}
+    </div>`;
+  }
+  h+=`</div>`;
+  document.getElementById('pg-cal').innerHTML=h;
+}
+function calPrev(){if(histM===0){histY--;histM=11;}else{histM--;}renderHist();}
+function calNext(){
+  const now=new Date();
+  if(histY<now.getFullYear()||(histY===now.getFullYear()&&histM<now.getMonth())){
+    if(histM===11){histY++;histM=0;}else{histM++;}renderHist();
+  }
+}
+
 // ── Navigation ────────────────────────────────────────────────────────────────
 function go(page){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
@@ -889,7 +967,11 @@ function go(page){
   document.getElementById('nav-'+page).classList.add('on');
   renderAll();
 }
-function setWho(m){ who=m; lsSet('who',m); renderLog(); }
+function setWho(m){
+  who=m; lsSet('who',m);
+  const pg=document.querySelector('.page.on')?.id?.replace('pg-','');
+  if(pg==='cal') renderHist(); else renderLog();
+}
 function setLbPer(p){ lbPeriod=p; renderBoard(); }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
