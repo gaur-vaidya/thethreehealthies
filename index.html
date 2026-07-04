@@ -124,16 +124,19 @@ h2{font-size:20px;font-weight:800;margin-bottom:14px;}
 .lb-row.bronze{border-color:#d97706;background:#fef3c7;}
 
 /* BADGES */
+.badge-section-title{grid-column:1/-1;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:10px 0 2px;}
 .badge-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.badge-card{background:#fff;border-radius:12px;border:2px solid var(--border);padding:14px;text-align:center;}
-.badge-icon{font-size:38px;margin-bottom:5px;}
-.badge-name{font-size:13px;font-weight:800;margin-bottom:3px;}
-.badge-desc{font-size:11px;color:var(--muted);line-height:1.4;margin-bottom:8px;}
-.badge-owners{display:flex;justify-content:center;gap:5px;flex-wrap:wrap;}
-.boc{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge-card{background:#fff;border-radius:12px;border:2px solid var(--border);padding:12px;text-align:center;transition:all .2s;}
+.badge-card.locked{opacity:.45;filter:grayscale(.6);}
+.badge-card.earned{border-color:var(--green);background:#f0fdf4;}
+.badge-card.full{border-color:#f59e0b;background:#fffbeb;}
+.badge-icon{font-size:36px;margin-bottom:4px;}
+.badge-name{font-size:12px;font-weight:800;margin-bottom:3px;}
+.badge-desc{font-size:10px;color:var(--muted);line-height:1.4;margin-bottom:7px;}
+.badge-owners{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;}
+.boc{padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;}
 .boc.yes{background:var(--green-l);color:var(--green-d);}
 .boc.no{background:#f1f5f9;color:var(--muted);}
-.badge-card.full{border-color:var(--green);background:#f0fdf4;}
 
 /* FOOD OVERLAY */
 #food-ov{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.5);align-items:flex-end;}
@@ -336,16 +339,68 @@ const FOODS = {
   water:       ['Water (8+ glasses)','Coconut Water','Lemon Water','Herbal Tea','Green Tea','Infused Water'],
 };
 
-const BADGES = [
-  {id:'fruit-hero',   icon:'🍎',name:'Fruit Hero',       desc:'Log fruits 7 days in a row',      type:'catStreak',catId:'fruits',         need:7},
-  {id:'green-hero',   icon:'🥬',name:'Green Hero',       desc:'Log green veg 7 days in a row',   type:'catStreak',catId:'greenVeg',        need:7},
-  {id:'water-warrior',icon:'💧',name:'Water Warrior',    desc:'Log water 14 days in a row',      type:'catStreak',catId:'water',           need:14},
-  {id:'brain-boost',  icon:'🧠',name:'Brain Boost',      desc:'Log nuts & seeds 5 times',        type:'catTotal', catId:'nutsSeeds',       need:5},
-  {id:'strong-bones', icon:'🦴',name:'Strong Bones',     desc:'Log dairy 10 times',              type:'catTotal', catId:'dairy',           need:10},
-  {id:'protein-king', icon:'💪',name:'Protein King',     desc:'Log protein 10 times',            type:'catTotal', catId:'protein',         need:10},
-  {id:'rainbow-champ',icon:'🌈',name:'Rainbow Champion', desc:'Complete Rainbow Plate 3 times',  type:'msnTotal', msnId:'rainbowPlate',    need:3},
-  {id:'virat-legend', icon:'🔥',name:'Virat Legend',     desc:'Activate Virat Mode 5 times',     type:'viratTotal',                        need:5},
+const BADGE_GROUPS = [
+  {
+    label:'🏃 Consistency',
+    badges:[
+      {id:'first-week',      icon:'🌱',name:'First Week',        desc:'Maintain a 7-day streak',           type:'overallStreak', need:7},
+      {id:'two-weeks',       icon:'🌿',name:'Two Weeks Strong',   desc:'Maintain a 14-day streak',          type:'overallStreak', need:14},
+      {id:'month-master',    icon:'🌳',name:'Month Master',       desc:'Maintain a 30-day streak',          type:'overallStreak', need:30},
+    ]
+  },
+  {
+    label:'🥗 Category Streaks',
+    badges:[
+      {id:'fruit-hero',      icon:'🍎',name:'Fruit Hero',         desc:'Log fruits 7 days in a row',        type:'catStreak', catId:'fruits',  need:7},
+      {id:'green-machine',   icon:'🥬',name:'Green Machine',      desc:'Log green veg 7 days in a row',     type:'catStreak', catId:'greenVeg',need:7},
+      {id:'water-warrior',   icon:'💧',name:'Water Warrior',      desc:'Log water 14 days in a row',        type:'catStreak', catId:'water',   need:14},
+      {id:'protein-power',   icon:'💪',name:'Protein Powerhouse', desc:'Log protein 14 days in a row',      type:'catStreak', catId:'protein', need:14},
+    ]
+  },
+  {
+    label:'📊 Category Totals',
+    badges:[
+      {id:'brain-boost',     icon:'🧠',name:'Brain Boost',        desc:'Log nuts & seeds 10 times',         type:'catTotal', catId:'nutsSeeds',    need:10},
+      {id:'strong-bones',    icon:'🦴',name:'Strong Bones',       desc:'Log dairy 20 times',                type:'catTotal', catId:'dairy',        need:20},
+      {id:'grain-grower',    icon:'🌾',name:'Grain Grower',       desc:'Log whole grains 15 times',         type:'catTotal', catId:'wholeGrains',  need:15},
+    ]
+  },
+  {
+    label:'🌈 Variety',
+    badges:[
+      {id:'rainbow-day',     icon:'🎨',name:'Rainbow Day',        desc:'Log 6+ categories in one day',      type:'dayAllCats', need:6},
+      {id:'full-plate',      icon:'🌍',name:'Full Plate',         desc:'Log all 8 categories in one day',   type:'dayAllCats', need:8},
+      {id:'explorer',        icon:'🔍',name:'Explorer',           desc:'Log 15 different foods total',      type:'foodTotal',  need:15},
+    ]
+  },
+  {
+    label:'🧘 Missions',
+    badges:[
+      {id:'home-chef',       icon:'🏠',name:'Home Chef',          desc:'Complete Homemade Meal 7 times',    type:'msnTotal', msnId:'homemadeMeal',    need:7},
+      {id:'breakfast-club',  icon:'🌅',name:'Breakfast Club',     desc:'Complete Healthy Breakfast 7 times',type:'msnTotal', msnId:'healthyBreakfast',need:7},
+      {id:'clean-eater',     icon:'🚫',name:'Clean Eater',        desc:'Complete No Junk Food 10 times',    type:'msnTotal', msnId:'noJunkFood',      need:10},
+      {id:'sugar-free',      icon:'🧃',name:'Sugar Free',         desc:'No Sugary Drinks 10 times',         type:'msnTotal', msnId:'noSugaryDrinks',  need:10},
+      {id:'rainbow-champ',   icon:'🌈',name:'Rainbow Champion',   desc:'Complete Rainbow Plate 3 times',    type:'msnTotal', msnId:'rainbowPlate',    need:3},
+    ]
+  },
+  {
+    label:'🔥 Virat Mode',
+    badges:[
+      {id:'first-fire',      icon:'🔥',name:'First Fire',         desc:'Hit Virat Mode for the first time', type:'viratTotal', need:1},
+      {id:'virat-regular',   icon:'🔥🔥',name:'Virat Regular',    desc:'Hit Virat Mode 5 times',            type:'viratTotal', need:5},
+      {id:'virat-legend',    icon:'👑',name:'Virat Legend',        desc:'Hit Virat Mode 15 times',           type:'viratTotal', need:15},
+    ]
+  },
+  {
+    label:'⭐ XP Milestones',
+    badges:[
+      {id:'rising-star',     icon:'⭐',name:'Rising Star',         desc:'Earn 500 XP total',                 type:'xpTotal', need:500},
+      {id:'superstar',       icon:'🌟',name:'Superstar',           desc:'Earn 2000 XP total',                type:'xpTotal', need:2000},
+      {id:'xp-legend',       icon:'💎',name:'Legend',              desc:'Earn 5000 XP total',                type:'xpTotal', need:5000},
+    ]
+  },
 ];
+const BADGES = BADGE_GROUPS.flatMap(g=>g.badges);
 
 const LEVELS = [
   {l:1,name:'Seedling',xp:0},{l:2,name:'Sprout',xp:100},{l:3,name:'Sapling',xp:250},
@@ -476,6 +531,19 @@ function checkBadges(m){
       ok=dates.filter(d=>logs[d][m]?.msns[b.msnId]).length>=b.need;
     } else if(b.type==='viratTotal'){
       ok=s.viratCount>=b.need;
+    } else if(b.type==='overallStreak'){
+      ok=(s.longestStreak>=b.need)||(s.streak>=b.need);
+    } else if(b.type==='xpTotal'){
+      ok=s.totalXP>=b.need;
+    } else if(b.type==='dayAllCats'){
+      ok=dates.some(d=>{
+        const cats=logs[d]?.[m]?.cats||{};
+        return Object.values(cats).filter(c=>c.logged).length>=b.need;
+      });
+    } else if(b.type==='foodTotal'){
+      const allFoods=new Set();
+      dates.forEach(d=>Object.values(logs[d]?.[m]?.cats||{}).forEach(c=>(c.foods||[]).forEach(f=>allFoods.add(f))));
+      ok=allFoods.size>=b.need;
     }
     if(ok){s.earnedBadges.push(b.id);newB.push(b);}
   }
@@ -865,18 +933,26 @@ function renderBoard(){
 
 // ── Render: Badges ────────────────────────────────────────────────────────────
 function renderBadges(){
-  let h='<h2>Badges 🎖️</h2><div class="badge-grid">';
-  BADGES.forEach(b=>{
-    const owners=MEMBERS.filter(m=>getSt(m).earnedBadges.includes(b.id));
-    const full=owners.length===MEMBERS.length;
-    h+=`<div class="badge-card${full?' full':''}">
-      <div class="badge-icon">${b.icon}</div>
-      <div class="badge-name">${b.name}</div>
-      <div class="badge-desc">${b.desc}</div>
-      <div class="badge-owners">
-        ${MEMBERS.map(m=>`<span class="boc ${owners.includes(m)?'yes':'no'}">${ICONS[m]} ${m}</span>`).join('')}
-      </div>
-    </div>`;
+  const totalEarned=MEMBERS.reduce((sum,m)=>sum+getSt(m).earnedBadges.length,0);
+  let h=`<h2>Badges 🎖️</h2>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">${totalEarned} of ${BADGES.length*MEMBERS.length} earned across the family</p>
+  <div class="badge-grid">`;
+  BADGE_GROUPS.forEach(g=>{
+    h+=`<div class="badge-section-title">${g.label}</div>`;
+    g.badges.forEach(b=>{
+      const owners=MEMBERS.filter(m=>getSt(m).earnedBadges.includes(b.id));
+      const anyEarned=owners.length>0;
+      const full=owners.length===MEMBERS.length;
+      const cls=full?'full':anyEarned?'earned':'locked';
+      h+=`<div class="badge-card ${cls}">
+        <div class="badge-icon">${b.icon}</div>
+        <div class="badge-name">${b.name}</div>
+        <div class="badge-desc">${b.desc}</div>
+        <div class="badge-owners">
+          ${MEMBERS.map(m=>`<span class="boc ${owners.includes(m)?'yes':'no'}">${ICONS[m]} ${m}</span>`).join('')}
+        </div>
+      </div>`;
+    });
   });
   h+='</div>';
   document.getElementById('pg-badges').innerHTML=h;
