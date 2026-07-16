@@ -508,6 +508,7 @@ function checkStreakBreak(m){
 function viratMode(log){
   return log.cats.fruits.logged && log.cats.greenVeg.logged &&
          log.cats.protein.logged && log.cats.water.logged &&
+         log.cats.nutsSeeds.logged &&
          log.msns.noJunkFood && log.msns.noSugaryDrinks;
 }
 
@@ -886,7 +887,7 @@ function renderLog(){
           ${vm?'VIRAT MODE ACTIVATED!':'Virat Mode'}
         </div>
         <div style="font-size:12px;color:var(--muted);margin-top:2px;">
-          ${vm?`${ICONS[who]} ${who} crushed it today! +50 XP earned`:'Fruit + Green Veg + Protein + Water + No Junk + No Sugary Drinks'}
+          ${vm?`${ICONS[who]} ${who} crushed it today! +50 XP earned`:'Fruit + Green Veg + Protein + Nuts &amp; Seeds + Water + No Junk + No Sugary Drinks'}
         </div>
       </div>
     </div>
